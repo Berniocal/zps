@@ -1,5 +1,5 @@
 // 🔥 ZMĚŇ vždy při update aplikace
-const CACHE_VERSION = "v3";
+const CACHE_VERSION = "v4";
 
 // název cache
 const CACHE_NAME = "playlist-app-" + CACHE_VERSION;
