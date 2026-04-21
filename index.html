@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Playlist Generator</title>
+<link rel="manifest" href="manifest.json">
+<style>
+body { font-family: Arial; padding: 15px; }
+table { border-collapse: collapse; width: 100%; }
+td, th { padding: 6px; border: 1px solid #ccc; text-align: center; }
+input { width: 90%; }
+button { margin-top: 15px; padding: 10px; width: 100%; font-size: 16px; }
+</style>
+</head>
+<body>
+
+<h2>Generátor playlistu</h2>
+
+<label>Název playlistu:</label>
+<input id="playlistName" placeholder="např. nedele"><br><br>
+
+<table>
+<tr><th>Píseň</th><th>ID</th><th>Transpozice</th></tr>
+<tbody id="tableBody"></tbody>
+</table>
+
+<button onclick="generate()">Stáhnout .proscholy</button>
+
+<script>
+const tbody = document.getElementById("tableBody");
+
+for (let i = 0; i < 20; i++) {
+  const row = document.createElement("tr");
+  row.innerHTML = `
+    <td>${i + 1}</td>
+    <td><input id="id_${i}"></td>
+    <td><input id="trans_${i}" value="0"></td>
+  `;
+  tbody.appendChild(row);
+}
+
+function generate() {
+  const name = document.getElementById("playlistName").value || "playlist";
+  const records = [];
+
+  for (let i = 0; i < 20; i++) {
+    const id = document.getElementById(`id_${i}`).value;
+    const trans = document.getElementById(`trans_${i}`).value;
+
+    if (id) {
+      const record = {
+        rank: i,
+        song_lyric: {
+          id: parseInt(id),
+          transposition: parseInt(trans)
+        }
+      };
+      records.push(record);
+    }
+  }
+
+  const data = { name: name, records: records };
+  const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name + ".proscholy";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js');
+}
+</script>
+
+</body>
+</html>
