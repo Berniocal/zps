@@ -7,6 +7,8 @@
 
 <link rel="manifest" href="manifest.json">
 
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
 <style>
 body { 
   font-family: Arial; 
@@ -53,11 +55,17 @@ input {
 }
 
 button { 
-  margin-top: 15px; 
+  margin-top: 10px; 
   padding: 12px; 
   width: 100%; 
   font-size: 16px; 
   cursor: pointer;
+}
+
+#qrcode {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
 }
 </style>
 </head>
@@ -80,13 +88,16 @@ button {
 </table>
 
 <button onclick="generate()">Stáhnout .proscholy</button>
+<button onclick="generateQR()">Sdílet přes QR</button>
+
+<div id="qrcode"></div>
 
 </div>
 
 <script>
 const tbody = document.getElementById("tableBody");
 
-// vytvoření 20 řádků
+// vytvoření řádků
 for (let i = 0; i < 20; i++) {
   const row = document.createElement("tr");
 
@@ -99,7 +110,8 @@ for (let i = 0; i < 20; i++) {
   tbody.appendChild(row);
 }
 
-function generate() {
+// vytvoření dat
+function getData() {
   const name = document.getElementById("playlistName").value || "playlist";
   const records = [];
 
@@ -118,21 +130,23 @@ function generate() {
     }
   }
 
-  const data = {
-    name: name,
-    records: records
-  };
+  return { name, records };
+}
+
+// export souboru
+function generate() {
+  const data = getData();
 
   const blob = new Blob(
     [JSON.stringify(data, null, 2)],
-    { type: "application/octet-stream" } // 🔥 důležité
+    { type: "application/octet-stream" }
   );
 
   const url = URL.createObjectURL(blob);
 
   const link = document.createElement("a");
   link.href = url;
-  link.setAttribute("download", name + ".proscholy");
+  link.setAttribute("download", data.name + ".proscholy");
 
   document.body.appendChild(link);
   link.click();
@@ -140,6 +154,40 @@ function generate() {
 
   URL.revokeObjectURL(url);
 }
+
+// QR generování
+function generateQR() {
+  const data = getData();
+
+  const encoded = btoa(JSON.stringify(data));
+  const url = location.origin + location.pathname + "#" + encoded;
+
+  const qrDiv = document.getElementById("qrcode");
+  qrDiv.innerHTML = "";
+
+  QRCode.toCanvas(url, { width: 220 }, function (error, canvas) {
+    if (!error) qrDiv.appendChild(canvas);
+  });
+}
+
+// načtení z QR / odkazu
+window.onload = () => {
+  if (location.hash.length > 1) {
+    try {
+      const decoded = JSON.parse(atob(location.hash.substring(1)));
+
+      document.getElementById("playlistName").value = decoded.name || "";
+
+      decoded.records.forEach(r => {
+        document.getElementById(`id_${r.rank}`).value = r.song_lyric.id;
+        document.getElementById(`trans_${r.rank}`).value = r.song_lyric.transposition || 0;
+      });
+
+    } catch (e) {
+      console.log("Chyba při načítání dat");
+    }
+  }
+};
 
 // PWA registrace
 if ('serviceWorker' in navigator) {
