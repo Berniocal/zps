@@ -3,40 +3,99 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Playlist Generator</title>
+<title>Generátor playlistu</title>
+
 <link rel="manifest" href="manifest.json">
+
 <style>
-body { font-family: Arial; padding: 15px; }
-table { border-collapse: collapse; width: 100%; }
-td, th { padding: 6px; border: 1px solid #ccc; text-align: center; }
-input { width: 90%; }
-button { margin-top: 15px; padding: 10px; width: 100%; font-size: 16px; }
+body { 
+  font-family: Arial; 
+  padding: 15px; 
+  display: flex;
+  justify-content: center;
+  background: #f5f5f5;
+}
+
+.container {
+  max-width: 600px;
+  width: 100%;
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+h2 {
+  text-align: center;
+}
+
+table { 
+  border-collapse: collapse; 
+  width: 100%; 
+}
+
+td, th { 
+  padding: 6px; 
+  border: 1px solid #ccc; 
+  text-align: center; 
+}
+
+input { 
+  width: 70px; 
+  text-align: center;
+  padding: 4px;
+}
+
+.name-input {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 6px;
+}
+
+button { 
+  margin-top: 15px; 
+  padding: 12px; 
+  width: 100%; 
+  font-size: 16px; 
+  cursor: pointer;
+}
 </style>
 </head>
+
 <body>
+<div class="container">
 
 <h2>Generátor playlistu</h2>
 
 <label>Název playlistu:</label>
-<input id="playlistName" placeholder="např. nedele"><br><br>
+<input id="playlistName" class="name-input" placeholder="např. nedele">
 
 <table>
-<tr><th>Píseň</th><th>ID</th><th>Transpozice</th></tr>
+<tr>
+  <th>#</th>
+  <th>ID</th>
+  <th>Transp.</th>
+</tr>
 <tbody id="tableBody"></tbody>
 </table>
 
 <button onclick="generate()">Stáhnout .proscholy</button>
 
+</div>
+
 <script>
 const tbody = document.getElementById("tableBody");
 
+// vytvoření řádků
 for (let i = 0; i < 20; i++) {
   const row = document.createElement("tr");
+
   row.innerHTML = `
     <td>${i + 1}</td>
     <td><input id="id_${i}"></td>
     <td><input id="trans_${i}" value="0"></td>
   `;
+
   tbody.appendChild(row);
 }
 
@@ -45,32 +104,45 @@ function generate() {
   const records = [];
 
   for (let i = 0; i < 20; i++) {
-    const id = document.getElementById(`id_${i}`).value;
-    const trans = document.getElementById(`trans_${i}`).value;
+    const id = document.getElementById(`id_${i}`).value.trim();
+    const trans = document.getElementById(`trans_${i}`).value.trim();
 
-    if (id) {
+    if (id !== "") {
       const record = {
         rank: i,
         song_lyric: {
           id: parseInt(id),
-          transposition: parseInt(trans)
+          transposition: parseInt(trans || 0)
         }
       };
+
       records.push(record);
     }
   }
 
-  const data = { name: name, records: records };
-  const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+  const data = {
+    name: name,
+    records: records
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], {
+    type: "application/json"
+  });
+
   const url = URL.createObjectURL(blob);
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name + ".proscholy";
-  a.click();
-  URL.revokeObjectURL(url);
-}
+  // spolehlivé stažení
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = name + ".proscholy";
+  link.textContent = "Klikni zde pro stažení";
+  link.style.display = "block";
+  link.style.marginTop = "10px";
 
+  document.body.appendChild(link);
+}
+  
+// PWA registrace
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('service-worker.js');
 }
