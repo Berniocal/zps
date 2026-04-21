@@ -6,7 +6,6 @@
 <title>Generátor playlistu</title>
 
 <link rel="manifest" href="manifest.json">
-
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
 <style>
@@ -97,7 +96,6 @@ button {
 <script>
 const tbody = document.getElementById("tableBody");
 
-// vytvoření řádků
 for (let i = 0; i < 20; i++) {
   const row = document.createElement("tr");
 
@@ -110,7 +108,6 @@ for (let i = 0; i < 20; i++) {
   tbody.appendChild(row);
 }
 
-// vytvoření dat
 function getData() {
   const name = document.getElementById("playlistName").value || "playlist";
   const records = [];
@@ -133,7 +130,6 @@ function getData() {
   return { name, records };
 }
 
-// export souboru
 function generate() {
   const data = getData();
 
@@ -155,12 +151,21 @@ function generate() {
   URL.revokeObjectURL(url);
 }
 
-// QR generování
 function generateQR() {
-  const data = getData();
+  const name = document.getElementById("playlistName").value || "playlist";
+  const parts = [];
 
-  const encoded = btoa(JSON.stringify(data));
-  const url = location.origin + location.pathname + "#" + encoded;
+  for (let i = 0; i < 20; i++) {
+    const id = document.getElementById(`id_${i}`).value.trim();
+    const trans = document.getElementById(`trans_${i}`).value.trim();
+
+    if (id !== "") {
+      parts.push(id + "," + (trans || 0));
+    }
+  }
+
+  const shortData = name + "|" + parts.join(";");
+  const url = location.origin + location.pathname + "#" + encodeURIComponent(shortData);
 
   const qrDiv = document.getElementById("qrcode");
   qrDiv.innerHTML = "";
@@ -170,26 +175,33 @@ function generateQR() {
   });
 }
 
-// načtení z QR / odkazu
 window.onload = () => {
   if (location.hash.length > 1) {
     try {
-      const decoded = JSON.parse(atob(location.hash.substring(1)));
+      const decoded = decodeURIComponent(location.hash.substring(1));
+      const [name, data] = decoded.split("|");
 
-      document.getElementById("playlistName").value = decoded.name || "";
+      document.getElementById("playlistName").value = name || "";
 
-      decoded.records.forEach(r => {
-        document.getElementById(`id_${r.rank}`).value = r.song_lyric.id;
-        document.getElementById(`trans_${r.rank}`).value = r.song_lyric.transposition || 0;
-      });
+      if (data) {
+        const items = data.split(";");
+
+        items.forEach((item, index) => {
+          const [id, trans] = item.split(",");
+
+          if (id) {
+            document.getElementById(`id_${index}`).value = id;
+            document.getElementById(`trans_${index}`).value = trans || 0;
+          }
+        });
+      }
 
     } catch (e) {
-      console.log("Chyba při načítání dat");
+      console.log("Chyba při načítání QR");
     }
   }
 };
 
-// PWA registrace
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('service-worker.js');
 }
