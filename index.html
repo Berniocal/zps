@@ -86,7 +86,7 @@ button {
 <script>
 const tbody = document.getElementById("tableBody");
 
-// vytvoření řádků
+// vytvoření 20 řádků
 for (let i = 0; i < 20; i++) {
   const row = document.createElement("tr");
 
@@ -108,15 +108,13 @@ function generate() {
     const trans = document.getElementById(`trans_${i}`).value.trim();
 
     if (id !== "") {
-      const record = {
+      records.push({
         rank: i,
         song_lyric: {
           id: parseInt(id),
           transposition: parseInt(trans || 0)
         }
-      };
-
-      records.push(record);
+      });
     }
   }
 
@@ -125,23 +123,24 @@ function generate() {
     records: records
   };
 
-  const blob = new Blob([JSON.stringify(data, null, 2)], {
-    type: "application/json"
-  });
+  const blob = new Blob(
+    [JSON.stringify(data, null, 2)],
+    { type: "application/octet-stream" } // 🔥 důležité
+  );
 
   const url = URL.createObjectURL(blob);
 
-  // spolehlivé stažení
   const link = document.createElement("a");
   link.href = url;
-  link.download = name + ".proscholy";
-  link.textContent = "Klikni zde pro stažení";
-  link.style.display = "block";
-  link.style.marginTop = "10px";
+  link.setAttribute("download", name + ".proscholy");
 
   document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  URL.revokeObjectURL(url);
 }
-  
+
 // PWA registrace
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('service-worker.js');
