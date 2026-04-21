@@ -96,6 +96,7 @@ button {
 <script>
 const tbody = document.getElementById("tableBody");
 
+// vytvoření řádků
 for (let i = 0; i < 20; i++) {
   const row = document.createElement("tr");
 
@@ -108,6 +109,7 @@ for (let i = 0; i < 20; i++) {
   tbody.appendChild(row);
 }
 
+// vytvoření dat
 function getData() {
   const name = document.getElementById("playlistName").value || "playlist";
   const records = [];
@@ -130,6 +132,7 @@ function getData() {
   return { name, records };
 }
 
+// export souboru
 function generate() {
   const data = getData();
 
@@ -151,6 +154,7 @@ function generate() {
   URL.revokeObjectURL(url);
 }
 
+// QR generování (mini kód)
 function generateQR() {
   const name = document.getElementById("playlistName").value || "playlist";
   const parts = [];
@@ -175,6 +179,7 @@ function generateQR() {
   });
 }
 
+// načtení z QR + DOTAZ NA STAŽENÍ
 window.onload = () => {
   if (location.hash.length > 1) {
     try {
@@ -196,12 +201,24 @@ window.onload = () => {
         });
       }
 
+      // 🔥 DOTAZ NA STAŽENÍ
+      setTimeout(() => {
+        const confirmDownload = confirm(
+          "Chcete stáhnout playlist '" + name + "'?"
+        );
+
+        if (confirmDownload) {
+          generate();
+        }
+      }, 300);
+
     } catch (e) {
       console.log("Chyba při načítání QR");
     }
   }
 };
 
+// PWA registrace
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('service-worker.js');
 }
