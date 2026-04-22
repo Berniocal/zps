@@ -37,10 +37,19 @@ input { width: 70px; text-align: center; padding: 4px; }
 button { margin-top: 10px; padding: 12px; width: 100%; font-size: 16px; cursor: pointer; }
 
 #qrcode { display:flex; justify-content:center; margin-top:10px; }
+
+/* DARK MODE */
+body.dark { background: #121212; color: white; }
+body.dark .container { background: #1e1e1e; }
+body.dark table, body.dark td, body.dark th { border-color: #555; }
+body.dark input { background: #2a2a2a; color: white; border: 1px solid #555; }
 </style>
 </head>
 
 <body>
+
+<button id="themeToggle" style="position:absolute; top:10px; right:10px;">🌙</button>
+
 <div class="container">
 
 <h2>Generátor playlistu</h2>
@@ -70,8 +79,8 @@ for (let i = 0; i < 20; i++) {
   const row = document.createElement("tr");
   row.innerHTML = `
     <td>${i+1}</td>
-    <td><input id="id_${i}"></td>
-    <td><input id="trans_${i}" value="0"></td>
+    <td><input id="id_${i}" type="number" inputmode="numeric"></td>
+    <td><input id="trans_${i}" type="number" inputmode="numeric" value="0"></td>
   `;
   tbody.appendChild(row);
 }
@@ -177,6 +186,20 @@ document.getElementById("fileInput").addEventListener("change",function(e){
   };
   reader.readAsText(file);
 });
+
+const toggle = document.getElementById("themeToggle");
+
+if (localStorage.getItem("theme") === "dark") {
+  document.body.classList.add("dark");
+  toggle.textContent = "☀️";
+}
+
+toggle.onclick = () => {
+  document.body.classList.toggle("dark");
+  const isDark = document.body.classList.contains("dark");
+  localStorage.setItem("theme", isDark ? "dark" : "light");
+  toggle.textContent = isDark ? "☀️" : "🌙";
+};
 
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('service-worker.js');
