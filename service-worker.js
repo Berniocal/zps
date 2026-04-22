@@ -6,9 +6,9 @@ const CACHE_NAME = "playlist-app-" + CACHE_VERSION;
 
 // co se má cachovat
 const ASSETS = [
-  "./",
-  "./index.html",
-  "./manifest.json"
+  "/",
+  "/index.html",
+  "/manifest.json"
 ];
 
 // instalace
