@@ -167,8 +167,12 @@ async function onBibleChapterChange(i,keepVerses=false){try{const ref=getBibleSe
 async function onBibleVerseChange(i){const fromEl=document.getElementById(`bibleFrom_${i}`),toEl=document.getElementById(`bibleTo_${i}`);let from=Number(fromEl.value)||1;let to=Number(toEl.value)||from;if(to<from)to=from;fromEl.value=from;toEl.value=to;await previewBibleRow(i);}
 function getBibleSelection(i){return {translation:BIBLE_TRANSLATION,book:document.getElementById(`bibleBook_${i}`).value,chapter:Number(document.getElementById(`bibleChapter_${i}`).value)||1,from:Number(document.getElementById(`bibleFrom_${i}`).value)||1,to:Number(document.getElementById(`bibleTo_${i}`).value)||Number(document.getElementById(`bibleFrom_${i}`).value)||1};}
 async function bibleSelectionToCustomText(sel){const out=await getBibleText(sel.translation,sel.book,sel.chapter,sel.from,sel.to);return {name:out.reference,content:textToProscholyDelta(out.text+"\n\n"+out.copyright)};}
+function bibleBookCodeToNumber(code){if(!BIBLE_INDEX)return code;const idx=(BIBLE_INDEX.books||[]).findIndex(b=>String(b.code)===String(code));return idx>=0?idx+1:code;}
+function bibleBookNumberToCode(book){if(!BIBLE_INDEX)return book;const n=Number(book);if(Number.isFinite(n)&&n>=1&&(BIBLE_INDEX.books||[])[n-1])return BIBLE_INDEX.books[n-1].code;return book;}
+function normalizeBibleVerseForProscholy(sel){return {book:bibleBookCodeToNumber(sel.book),chapter:Number(sel.chapter)||1,start_verse:Number(sel.from??sel.start_verse)||1,end_verse:Number(sel.to??sel.end_verse??sel.from??sel.start_verse)||1};}
+function normalizeBibleVerseForUi(sel){return {translation:sel.translation||BIBLE_TRANSLATION,book:bibleBookNumberToCode(sel.book),chapter:Number(sel.chapter)||1,from:Number(sel.from??sel.start_verse)||1,to:Number(sel.to??sel.end_verse??sel.from??sel.start_verse)||1};}
 async function previewBibleRow(i){try{const sel=getBibleSelection(i);const out=await getBibleText(sel.translation,sel.book,sel.chapter,sel.from,sel.to);document.getElementById(`biblePreview_${i}`).textContent=out.reference+": "+out.text.slice(0,220)+(out.text.length>220?"…":"");}catch(e){document.getElementById(`biblePreview_${i}`).textContent="Úryvek se nepodařilo načíst: "+e.message;}}
-async function setBibleRow(i,b){document.getElementById(`type_${i}`).value="bible";syncRow(i);await ensureBibleIndex();populateBibleBookSelect(i,b.book);document.getElementById(`bibleBook_${i}`).value=b.book||"GEN";fillChapterSelect(i,b.chapter||1);document.getElementById(`bibleChapter_${i}`).value=b.chapter||1;await onBibleChapterChange(i,true);document.getElementById(`bibleFrom_${i}`).value=b.from||b.start_verse||1;document.getElementById(`bibleTo_${i}`).value=b.to||b.end_verse||b.from||b.start_verse||1;await onBibleVerseChange(i);}
+async function setBibleRow(i,b){const ui=normalizeBibleVerseForUi(b);document.getElementById(`type_${i}`).value="bible";syncRow(i);await ensureBibleIndex();const bookCode=bibleBookNumberToCode(ui.book)||"GEN";populateBibleBookSelect(i,bookCode);document.getElementById(`bibleBook_${i}`).value=bookCode;fillChapterSelect(i,ui.chapter||1);document.getElementById(`bibleChapter_${i}`).value=ui.chapter||1;await onBibleChapterChange(i,true);document.getElementById(`bibleFrom_${i}`).value=ui.from||1;document.getElementById(`bibleTo_${i}`).value=ui.to||ui.from||1;await onBibleVerseChange(i);}
 function getRawData(){
   const name=document.getElementById("playlistName").value||"playlist"; const records=[];
   for(let i=0;i<ROWS;i++){
@@ -187,8 +191,9 @@ function getRawData(){
 }
 async function getData(){
   const raw=getRawData(); const records=[];
+  if(raw.records.some(r=>r.bible_verse)) await ensureBibleIndex();
   for(const r of raw.records){
-    if(r.bible_verse){const ct=await bibleSelectionToCustomText(r.bible_verse);records.push({rank:records.length,custom_text:ct});}
+    if(r.bible_verse){records.push({rank:records.length,bible_verse:normalizeBibleVerseForProscholy(r.bible_verse)});}
     else records.push({...r,rank:records.length});
   }
   return {name:raw.name,records};
