@@ -1,8 +1,11 @@
 // 🔥 ZMĚŇ vždy při update aplikace
 const CACHE_VERSION = "v23";
 
+// prefix jen pro tuto aplikaci - nemaže cache ostatním PWA na stejné doméně
+const CACHE_PREFIX = "playlist-app-";
+
 // název cache
-const CACHE_NAME = "playlist-app-" + CACHE_VERSION;
+const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;
 
 // základní soubory aplikace
 const CORE_ASSETS = [
@@ -74,7 +77,7 @@ self.addEventListener("activate", event => {
     caches.keys().then(keys =>
       Promise.all(
         keys.map(key => {
-          if (key !== CACHE_NAME) {
+          if (key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME) {
             console.log("Deleting old cache:", key);
             return caches.delete(key);
           }
